@@ -34,41 +34,29 @@ namespace Hime.Parsers
             }
         }
 
-        public void Export(StreamWriter stream, string className, AccessModifier modifier)
+        public void ExportCode(StreamWriter stream, string name, AccessModifier modifier, string resource)
         {
-            stream.WriteLine("    " + modifier.ToString().ToLower() + " class " + className + " : LexerText");
+            stream.WriteLine("    " + modifier.ToString().ToLower() + " class " + name + "Lexer : TextLexer");
             stream.WriteLine("    {");
-            ExportTerminals(stream);
-            ExportStates(stream);
-            ExportSetup(stream);
-            ExportClone(stream, className);
-            ExportConstructor(stream, className);
+            ExportStatics(stream, name, resource);
+            ExportConstructor(stream, name);
             stream.WriteLine("    }");
         }
+        public void ExportData(BinaryWriter stream)
+        {
+            ExportStates(stream);
+        }
 
-        private void ExportConstructor(StreamWriter stream, string className)
+        private void ExportConstructor(StreamWriter stream, string name)
         {
-            stream.WriteLine("        public " + className + "(string input) : base(new System.IO.StringReader(input)) {}");
-            stream.WriteLine("        public " + className + "(System.IO.TextReader input) : base(input) {}");
-            stream.WriteLine("        public " + className + "(" + className + " original) : base(original) {}");
+            string sep = "FFFF";
+            if (separator != null) sep = separator.SID.ToString("X");
+            stream.WriteLine("        public " + name + "Lexer(string input) : base(automaton, terminals, 0x" + sep + ", new System.IO.StringReader(input)) {}");
+            stream.WriteLine("        public " + name + "Lexer(System.IO.TextReader input) : base(automaton, terminals, 0x" + sep + ", input) {}");
         }
-        private void ExportClone(StreamWriter stream, string className)
+        private void ExportStatics(StreamWriter stream, string name, string resource)
         {
-            stream.WriteLine("        public override LexerText Clone() {");
-            stream.WriteLine("            return new " + className + "(this);");
-            stream.WriteLine("        }");
-        }
-        private void ExportSetup(StreamWriter stream)
-        {
-            stream.WriteLine("        protected override void setup() {");
-            stream.WriteLine("            states = staticStates;");
-            stream.WriteLine("            subGrammars = new Dictionary<ushort, MatchSubGrammar>();");
-            if (separator != null)
-                stream.WriteLine("            separatorID = 0x" + separator.SID.ToString("X") + ";");
-            stream.WriteLine("        }");
-        }
-        private void ExportTerminals(StreamWriter stream)
-        {
+            stream.WriteLine("        private static readonly TextLexerAutomaton automaton = TextLexerAutomaton.FindAutomaton(typeof(" + name + "Lexer), \"" + resource + "\");");
             stream.WriteLine("        public static readonly SymbolTerminal[] terminals = {");
             bool first = true;
             foreach (Terminal terminal in terminals)
@@ -80,49 +68,51 @@ namespace Hime.Parsers
             }
             stream.WriteLine(" };");
         }
-        private void ExportState(StreamWriter stream, Automata.DFAState state)
+        private void ExportState(BinaryWriter stream, Automata.DFAState state)
         {
-            stream.Write("            ");
-            if (state.Transitions.Count == 0)
+            ushort[] cache = new ushort[256];
+            for (int i = 0; i != 256; i++)
+                cache[i] = 0xFFFF;
+
+            foreach (Automata.CharSpan span in state.Transitions.Keys)
             {
-                stream.Write("new LexerDFAState(new ushort[][] {}, ");
-                if (state.Final == null)
-                    stream.Write("null)");
-                else
-                    stream.Write("terminals[0x" + terminals.IndexOf(state.Final).ToString("X") + "])");
-            }
-            else
-            {
-                stream.WriteLine("new LexerDFAState(new ushort[][] {");
-                bool first = true;
-                foreach (Automata.CharSpan span in state.Transitions.Keys)
+                if (span.Begin <= 255)
                 {
-                    string begin = System.Convert.ToUInt16(span.Begin).ToString("X");
-                    string end = System.Convert.ToUInt16(span.End).ToString("X");
-                    string next = state.Transitions[span].ID.ToString("X");
-                    if (!first) stream.WriteLine(",");
-                    stream.Write("                ");
-                    stream.Write("new ushort[3] { 0x" + begin + ", 0x" + end + ", 0x" + next + " }");
-                    first = false;
+                    int end = (span.End < 255 ? span.End : 255);
+                    for (int i = span.Begin; i != end + 1; i++)
+                        cache[i] = (ushort)state.Transitions[span].ID;
                 }
-                stream.WriteLine("},");
-                if (state.Final == null)
-                    stream.Write("                null)");
-                else
-                    stream.Write("                terminals[0x" + terminals.IndexOf(state.Final).ToString("X") + "])");
+            }
+
+            if (state.Final != null)
+                stream.Write((ushort)terminals.IndexOf(state.Final));
+            else
+                stream.Write((ushort)0xFFFF);
+            stream.Write((ushort)state.TransitionsCount);
+
+            for (int i = 0; i != 256; i++)
+                stream.Write(cache[i]);
+
+            List<Automata.CharSpan> keys = new List<Automata.CharSpan>(state.Transitions.Keys);
+            keys.Sort(new Comparison<Automata.CharSpan>(Automata.CharSpan.CompareReverse));
+            foreach (Automata.CharSpan span in keys)
+            {
+                stream.Write(System.Convert.ToUInt16(span.Begin));
+                stream.Write(System.Convert.ToUInt16(span.End));
+                stream.Write((ushort)state.Transitions[span].ID);
             }
         }
-        private void ExportStates(StreamWriter stream)
+        private void ExportStates(BinaryWriter stream)
         {
-            stream.WriteLine("        private static LexerDFAState[] staticStates = { ");
-            bool first = true;
+            stream.Write(dfa.States.Count);
+            int offset = 0;
             foreach (Automata.DFAState state in dfa.States)
             {
-                if (!first) stream.WriteLine(",");
-                ExportState(stream, state);
-                first = false;
+                stream.Write(offset);
+                offset += state.TransitionsCount * 3 + 258;
             }
-            stream.WriteLine(" };");
+            foreach (Automata.DFAState state in dfa.States)
+                ExportState(stream, state);
         }
     }
 }
