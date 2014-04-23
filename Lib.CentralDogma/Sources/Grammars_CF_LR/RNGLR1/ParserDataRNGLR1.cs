@@ -21,6 +21,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Hime.Redist;
 using Hime.Redist.Parsers;
 
 namespace Hime.CentralDogma.Grammars.ContextFree.LR
@@ -163,8 +164,8 @@ namespace Hime.CentralDogma.Grammars.ContextFree.LR
         protected void ExportDataProduction(BinaryWriter stream, Rule rule, int length)
         {
             stream.Write((ushort)variables.IndexOf(rule.Head));
-            if (rule.ReplaceOnProduction) stream.Write((byte)LRTreeAction.Replace);
-            else stream.Write((byte)LRTreeAction.None);
+            if (rule.ReplaceOnProduction) stream.Write((byte)TreeAction.Replace);
+            else stream.Write((byte)TreeAction.None);
             stream.Write((byte)length);
             byte bcl = 0;
             int pop = 0;
