@@ -1,5 +1,5 @@
-/**********************************************************************
-* Copyright (c) 2013 Laurent Wouters and others
+﻿/**********************************************************************
+* Copyright (c) 2014 Laurent Wouters and others
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Lesser General Public License as
 * published by the Free Software Foundation, either version 3
@@ -23,18 +23,12 @@ using System.IO;
 using System.Reflection;
 using Hime.CentralDogma;
 using Hime.CentralDogma.SDK;
-using Hime.Redist.Parsers;
+using Hime.Redist;
 
 namespace Hime.Demo.Tasks
 {
-	/// <summary>
-	/// This tasks regenerates the parser for the CentralDogma inputs and re-parses the input grammar with the generated parser
-	/// </summary>
     class ParseGrammar : IExecutable
     {
-		/// <summary>
-		///  Execute this instance. 
-		/// </summary>
         public void Execute()
         {
             // Build parser assembly
@@ -55,18 +49,34 @@ namespace Hime.Demo.Tasks
 			// Re-parse the input grammar with the generated parser
             StreamReader input = new StreamReader(typeof(CompilationTask).Assembly.GetManifestResourceStream("Hime.CentralDogma.Sources.Input.FileCentralDogma.gram"));
 			BaseLRParser parser = assembly.GetDefaultParser(input);
-            Redist.AST.ASTNode root = parser.Parse();
+            ParseResult result = parser.Parse();
             input.Close();
             
 			// Display the errors if any
             foreach (ParserError error in parser.Errors)
                 Console.WriteLine(error.ToString());
-            if (root == null)
+            if (!result.IsSuccess)
                 return;
-
-			// Display the produced AST
-            WinTreeView win = new WinTreeView(root);
+            WinTreeView win = new WinTreeView(result.Root);
             win.ShowDialog();
+        }
+
+        private Hime.Redist.Lexer.Lexer GetLexer(Assembly assembly, System.IO.StreamReader reader)
+        {
+            Type lexerType = assembly.GetType("Hime.CentralDogma.Input.FileCentralDogmaLexer");
+            ConstructorInfo lexerConstructor = lexerType.GetConstructor(new Type[] { typeof(System.IO.TextReader) });
+            object lexer = lexerConstructor.Invoke(new object[] { reader });
+            return lexer as Hime.Redist.Lexer.Lexer;
+        }
+
+        private Hime.Redist.Parsers.BaseLRParser GetParser(Assembly assembly, System.IO.StreamReader reader)
+        {
+            Hime.Redist.Lexer.Lexer lexer = GetLexer(assembly, reader);
+            Type lexerType = assembly.GetType("Hime.CentralDogma.Input.FileCentralDogmaLexer");
+            Type parserType = assembly.GetType("Hime.CentralDogma.Input.FileCentralDogmaParser");
+            ConstructorInfo parserConstructor = parserType.GetConstructor(new Type[] { lexerType });
+            object parser = parserConstructor.Invoke(new object[] { lexer });
+            return parser as Hime.Redist.Parsers.BaseLRParser;
         }
     }
 }

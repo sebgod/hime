@@ -18,6 +18,8 @@
 *     Laurent Wouters - lwouters@xowl.org
 **********************************************************************/
 
+using System;
+using System.IO;
 using Hime.Demo.Tasks;
 
 namespace Hime.Demo
@@ -34,6 +36,18 @@ namespace Hime.Demo
         {
 			IExecutable executable = new ExtractLexer();
             executable.Execute();
+        }
+
+        private static DirectoryInfo FindExtras()
+        {
+            DirectoryInfo current = new DirectoryInfo(Environment.CurrentDirectory);
+            DirectoryInfo[] subs = current.GetDirectories(dirExtras);
+            while (subs == null || subs.Length == 0)
+            {
+                current = current.Parent;
+                subs = current.GetDirectories(dirExtras);
+            }
+            return subs[0];
         }
     }
 }
