@@ -211,6 +211,9 @@ namespace Hime.CentralDogma
 				case Output.Runtime.Java:
 					emitter = new Output.EmitterForJava(reporter, target);
 					break;
+				case Output.Runtime.Python:
+					emitter = new Output.EmitterForPython(reporter, target);
+					break;
 			}
 			emitter.Emit((OutputPath != null) ? OutputPath : "", nmspace, CodeAccess, Method, Mode);
 		}

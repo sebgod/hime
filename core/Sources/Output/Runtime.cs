@@ -32,6 +32,10 @@ namespace Hime.CentralDogma.Output
 		/// <summary>
 		/// The Java platform
 		/// </summary>
-		Java
+		Java,
+		/// <summary>
+		/// The Python 3.3+ runtime
+		/// </summary>
+		Python
 	}
 }

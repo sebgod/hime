@@ -39,6 +39,7 @@ namespace Hime.HimeCC
 		private const string ArgOutputNoSources = "-o:nosources";
 		private const string ArgOutputDebug = "-o:debug";
 		private const string ArgTargetJava = "-t:java";
+		private const string ArgTargetPython = "-t:python";
 		private const string ArgGrammar = "-g";
 		private const string ArgPath = "-p";
 		private const string ArgMethodRNGLR = "-m:rnglr";
@@ -226,6 +227,9 @@ namespace Hime.HimeCC
 						break;
 					case ArgTargetJava:
 						task.Target = Hime.CentralDogma.Output.Runtime.Java;
+						break;
+					case ArgTargetPython:
+						task.Target = Hime.CentralDogma.Output.Runtime.Python;
 						break;
 					case ArgGrammar:
 						if (arg.Children.Count != 1)
