@@ -6,3 +6,5 @@ syntax: regexp
 .*/target/.*
 .*/out/.*
 .*\.class
+.*\.pyc
+
