@@ -173,6 +173,7 @@
     <Compile Include="Sources\Output\EmitterForJava.cs" />
     <Compile Include="Sources\Output\LexerPythonCodeGenerator.cs" />
     <Compile Include="Sources\Output\EmitterForPython.cs" />
+    <Compile Include="Sources\Output\Unit.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Sources\Input\HimeGrammar.gram" />
