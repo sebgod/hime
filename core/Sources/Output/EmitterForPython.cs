@@ -44,33 +44,55 @@ namespace Hime.CentralDogma.Output
 		/// <summary>
 		/// Initializes this emitter
 		/// </summary>
-		/// <param name="grammar">The grammar to emit data for</param>
-		public EmitterForPython(Grammars.Grammar grammar) : base(grammar) { }
+		/// <param name="units">The units to emit data for</param>
+		public EmitterForPython(List<Unit> units) : base(new Reporter(), units)
+		{
+		}
+
+		/// <summary>
+		/// Initializes this emitter
+		/// </summary>
+		/// <param name="unit">The unit to emit data for</param>
+		public EmitterForPython(Unit unit) : base(new Reporter(), unit)
+		{
+		}
+
 		/// <summary>
 		/// Initializes this emitter
 		/// </summary>
 		/// <param name="reporter">The reporter to use</param>
-		/// <param name="grammar">The grammar to emit data for</param>
-		public EmitterForPython(Reporter reporter, Grammars.Grammar grammar) : base(reporter, grammar) { }
+		/// <param name="units">The units to emit data for</param>
+		public EmitterForPython(Reporter reporter, List<Unit> units) : base(reporter, units)
+		{
+		}
+
+		/// <summary>
+		/// Initializes this emitter
+		/// </summary>
+		/// <param name="reporter">The reporter to use</param>
+		/// <param name="unit">The unit to emit data for</param>
+		public EmitterForPython(Reporter reporter, Unit unit) : base(reporter, unit)
+		{
+		}
 
 		/// <summary>
 		/// Gets the runtime-specific generator of lexer code
 		/// </summary>
-		/// <param name="separator">The separator terminal</param>
+		/// <param name="unit">The unit to generate a lexer for</param>
 		/// <returns>The runtime-specific generator of lexer code</returns>
-		protected override Generator GetLexerCodeGenerator(Grammars.Terminal separator)
+		protected override Generator GetLexerCodeGenerator(Unit unit)
 		{
-			return new LexerPythonCodeGenerator(nmspace, modifier, grammar.Name, grammar.Name + suffixLexerData, expected, separator);
+			return new LexerPythonCodeGenerator(unit, unit.Name + suffixLexerData);
 		}
 
 		/// <summary>
 		/// Gets the runtime-specific generator of parser code
 		/// </summary>
-		/// <param name="parserType">The type of parser to generate</param>
+		/// <param name="unit">The unit to generate a parser for</param>
 		/// <returns>The runtime-specific generator of parser code</returns>
-		protected override Generator GetParserCodeGenerator(string parserType)
+		protected override Generator GetParserCodeGenerator(Unit unit)
 		{
-			return new ParserNetCodeGenerator(nmspace, modifier, grammar.Name, grammar.Name + suffixParserData, grammar, parserType);
+			return new ParserNetCodeGenerator(unit, unit.Name + suffixParserData);
 		}
 
 		/// <summary>

@@ -47,18 +47,14 @@ namespace Hime.CentralDogma.Output
 		/// <summary>
 		/// Initializes this code generator
 		/// </summary>
-		/// <param name="nmespace">The nmespace of the generated code</param>
-		/// <param name="modifier">The visibility modifier for the generated code</param>
-		/// <param name="name">The name of the generated lexer</param>
+		/// <param name="unit">The unit to generate code for</param>
 		/// <param name="binResource">Path to the automaton's binary resource</param>
-		/// <param name="terminals">The terminals for the lexer</param>
-		/// <param name="separator">The separator terminal</param>
-		public LexerPythonCodeGenerator(string nmespace, Modifier modifier, string name, string binResource, ROList<Terminal> terminals, Terminal separator)
+		public LexerPythonCodeGenerator(Unit unit, string binResource)
 		{
-			this.name = (modifier == Modifier.Internal ? "_" : "") + name;
+			this.name = (unit.Modifier == Modifier.Internal ? "_" : "") + name;
 			this.binResource = binResource;
-			this.terminals = terminals;
-			this.separator = separator;
+			this.terminals = unit.Expected;
+			this.separator = unit.Separator;
 		}
 
 		/// <summary>
