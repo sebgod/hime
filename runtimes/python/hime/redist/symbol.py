@@ -85,3 +85,41 @@ class Token:
         :return: The index of this token in a lexer's stream of token
         """
         return self.__index
+
+
+class SymbolType:
+    """
+    Represents the type of symbol
+    """
+    NONE = 0
+    TOKEN = 1
+    VARIABLE = 2
+    VIRTUAL = 3
+
+
+def encode_symbol_ref(stype, index):
+    """
+    Encodes a symbol reference
+    :param stype: The symbol's type
+    :param index: The symbol's index in its table
+    :return: The symbol reference
+    """
+    return (stype << 30) | index
+
+
+def get_symbol_type(reference):
+    """
+    Decodes the symbol type from the specified reference
+    :param reference: A symbol reference
+    :return: The corresponding symbol type
+    """
+    return reference >> 30
+
+
+def get_symbol_index(reference):
+    """
+    Decodes the symbol index from the specified reference
+    :param reference: A symbol reference
+    :return: The corresponding symbol index
+    """
+    return reference & 0x3FFFFFFF

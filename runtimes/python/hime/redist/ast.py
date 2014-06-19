@@ -49,7 +49,7 @@ class AST:
         :param parent: A node
         :return: An enumerator for the children
         """
-        raise NotImplementedError('This method must be implemented by subclasses')
+        return _ChildIterator(self, parent)
 
     def get_position(self, node):
         """
@@ -91,28 +91,12 @@ class ASTNode:
         return self.__tree.get_position(self.__index)
 
     @property
-    def children_count(self):
-        """
-        Gets the number of children
-        :return: The number of children
-        """
-        return self.__tree.get_children_count(self.__index)
-
-    def child(self, i):
-        """
-        Gets the i-th child
-        :param i:
-        :return:
-        """
-        return self.__tree.get_child(self.__index, i)
-
-    @property
     def children(self):
         """
         Gets the children of this node
         :return: The children of this node
         """
-        return self.__tree.get_children(self.__index)
+        return ASTFamily(self.__tree, self.__index)
 
     def __str__(self):
         """
@@ -120,3 +104,69 @@ class ASTNode:
         :return: The string representation of the associated symbol
         """
         return str(self.__tree.get_symbol(self.__index))
+
+
+class ASTFamily:
+    """
+    Represents a family of children for an ASTNode
+    """
+    def __init__(self, tree, parent):
+        """
+        Initializes this family
+        :param tree: The parent parse tree
+        :param parent: The index of the parent node in the parse tree
+        :return: The family
+        """
+        self.__tree = tree
+        self.__parent = parent
+
+    @property
+    def count(self):
+        """
+        Gets the number of children
+        :return: The number of children
+        """
+        return self.__tree.get_children_count(self.__parent)
+
+    def __getitem__(self, item):
+        """
+        Gets the i-th child
+        :param item: The index of the child
+        :return: The child at the given index
+        """
+        return self.__tree.get_child(self.__parent, item)
+
+    def __iter__(self):
+        """
+        Gets an enumeration of the children
+        :return: An enumeration of the children
+        """
+        return _ChildIterator(self.__tree, self.__parent)
+
+
+class _ChildIterator:
+    """
+    Implements an iterator over the children of a node
+    """
+    def __init__(self, tree, parent):
+        """
+        Initializes this iterator
+        :param tree: The parent tree
+        :param parent: The parent node
+        :return: The iterator
+        """
+        self.__tree = tree
+        self.__parent = parent
+        self.__index = 0
+        self.__count = tree.get_children_count(parent)
+
+    def next(self):
+        """
+        Gets the next element
+        :return: The next element
+        """
+        if self.__index == self.__count:
+            raise StopIteration
+        child = self.__tree.get_child(self.__parent, self.__index)
+        self.__index += 1
+        return child
