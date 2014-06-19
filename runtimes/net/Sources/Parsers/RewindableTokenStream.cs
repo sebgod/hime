@@ -85,7 +85,7 @@ namespace Hime.Redist.Parsers
 		}
 
 		/// <summary>
-		/// Pushs the given token onto the ring
+		/// Pushes the given token onto the ring
 		/// </summary>
 		/// <param name="value">The token to push</param>
 		private void PushInRing(Token value)

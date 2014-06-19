@@ -36,7 +36,7 @@ namespace Hime.Redist.Parsers
 		IList<Symbol> Virtuals { get; }
 
 		/// <summary>
-		/// Gets or sets whether the paser should try to recover from errors
+		/// Gets or sets whether the parser should try to recover from errors
 		/// </summary>
 		bool RecoverErrors { get; set; }
 		/// <summary>
