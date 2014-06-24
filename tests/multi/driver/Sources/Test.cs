@@ -114,7 +114,9 @@ namespace Hime.Tests.Driver
 				builder.Append(node.Children[0].Children[0].Symbol.Value);
 				builder.Append("'");
 				string value = node.Children[0].Children[1].Symbol.Value;
-				value = Hime.CentralDogma.Grammars.Loader.ReplaceEscapees(value.Substring(1, value.Length - 2));
+				// Decode the read value by replacing all the escape sequences
+				value = Hime.CentralDogma.Grammars.Loader.ReplaceEscapees(value.Substring(1, value.Length - 2)).Replace("\\'", "'");
+				// Reset escape sequences for single quotes and backslashes
 				value = value.Replace("\\", "\\\\").Replace("'", "\\'");
 				builder.Append(value);
 				builder.Append("'");
@@ -206,6 +208,18 @@ namespace Hime.Tests.Driver
 				output.Add(ex.ToString());
 			}
 			result.Finish(code, output);
+			switch (code)
+			{
+				case TestResult.RESULT_SUCCESS:
+					reporter.Info("\t=> Success");
+					break;
+				case TestResult.RESULT_FAILURE_PARSING:
+					reporter.Info("\t=> Error");
+					break;
+				case TestResult.RESULT_FAILURE_VERB:
+					reporter.Info("\t=> Failure");
+					break;
+			}
 			return result;
 		}
 
@@ -239,6 +253,18 @@ namespace Hime.Tests.Driver
 				output.Add(ex.ToString());
 			}
 			result.Finish(code, output);
+			switch (code)
+			{
+				case TestResult.RESULT_SUCCESS:
+					reporter.Info("\t=> Success");
+					break;
+				case TestResult.RESULT_FAILURE_PARSING:
+					reporter.Info("\t=> Error");
+					break;
+				case TestResult.RESULT_FAILURE_VERB:
+					reporter.Info("\t=> Failure");
+					break;
+			}
 			return result;
 		}
 
@@ -265,14 +291,7 @@ namespace Hime.Tests.Driver
 				if (line == null || line.Length == 0)
 					break;
 				output.Add(line);
-				if (line.StartsWith("[ERROR]"))
-					reporter.Error(line.Substring(8));
-				else if (line.StartsWith("[WARNING]"))
-					reporter.Warn(line.Substring(10));
-				else if (line.StartsWith("[INFO]"))
-					reporter.Info(line.Substring(7));
-				else
-					reporter.Info(line);
+				reporter.Info(line);
 			}
 			process.WaitForExit();
 			return process.ExitCode;
@@ -307,7 +326,7 @@ namespace Hime.Tests.Driver
 			root.Attributes["tests"].Value = results.Count.ToString();
 			root.Attributes["failures"].Value = aggregated.failed.ToString();
 			root.Attributes["errors"].Value = aggregated.errors.ToString();
-			root.Attributes["time"].Value = aggregated.spent.ToString();
+			root.Attributes["time"].Value = aggregated.spent.TotalSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
 			return aggregated;
 		}
