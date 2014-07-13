@@ -1,0 +1,39 @@
+hime.redist
+===========
+
+hime.redist is the redistributable runtime for the parsers generated
+with the `Hime`_ parser generator while targeting the Python platform.
+
+This runtime, as well as all `Hime`_ components, is licensed under the `LGPL v3+`_.
+
+
+Install
+=======
+
+To install this package using pip::
+
+    $ pip install hime.redist
+
+
+Parser Generation
+=================
+
+This package only contains the Python runtime for the generated parsers;
+it is not able to generate the parsers themselves.
+To generate new parsers, the `Hime SDK`_ must be downloaded and used.
+The `Hime SDK`_ requires a local installation of .Net 2+, or `Mono`_.
+To generate parsers targeting the Python runtime, use::
+
+    $ himecc MyGrammar.gram -t:python
+
+or with `Mono`_::
+
+    $ mono himecc.exe MyGrammar.gram -t:python
+
+Refer to the `Hime documentation`_ for more details.
+
+.. _`Hime`: https://bitbucket.org/laurentw/hime
+.. _`LGPL v3+`: https://www.gnu.org/licenses/lgpl.txt
+.. _`Hime SDK`: https://bitbucket.org/laurentw/hime/downloads
+.. _`Mono`: http://www.mono-project.com/Main_Page
+.. _`Hime documentation`: https://bitbucket.org/laurentw/hime/wiki/Home
