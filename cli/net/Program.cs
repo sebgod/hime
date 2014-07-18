@@ -21,7 +21,6 @@ using System;
 using System.Reflection;
 using System.Text;
 using Hime.CentralDogma;
-using Hime.HimeCC.CL;
 using Hime.Redist;
 
 namespace Hime.HimeCC
@@ -94,7 +93,7 @@ namespace Hime.HimeCC
 			}
 
 			// Parse the arguments
-			ParseResult result = ParseArguments(args);
+			ParseResult result = Hime.CentralDogma.Input.CommandLine.ParseArguments(args);
 			if (!result.IsSuccess || result.Errors.Count > 0)
 			{
 				Console.WriteLine(ErrorParsingArgs);
@@ -108,7 +107,8 @@ namespace Hime.HimeCC
 			{
 				PrintHelp();
 				return ResultOK;
-			} else if (special == ArgRegenerateShort || special == ArgRegenerateLong)
+			}
+			else if (special == ArgRegenerateShort || special == ArgRegenerateLong)
 			{
 				GenerateCLParser();
 				GenerateCDParser();
@@ -140,11 +140,11 @@ namespace Hime.HimeCC
 		/// <returns>The number of errors (should be 0)</returns>
 		private int GenerateCLParser()
 		{
-			System.IO.Stream stream = typeof(Program).Assembly.GetManifestResourceStream("himecc.CommandLine.gram");
+			System.IO.Stream stream = typeof(CompilationTask).Assembly.GetManifestResourceStream("Hime.CentralDogma.Sources.Input.CommandLine.gram");
 			CompilationTask task = new CompilationTask();
 			task.Mode = Hime.CentralDogma.Output.Mode.Source;
 			task.AddInputRaw(stream);
-			task.Namespace = "Hime.HimeCC.CL";
+			task.Namespace = "Hime.CentralDogma.Input";
 			task.CodeAccess = Hime.CentralDogma.Output.Modifier.Internal;
 			task.Method = ParsingMethod.LALR1;
 			Report report = task.Execute();
@@ -167,27 +167,6 @@ namespace Hime.HimeCC
 			task.Method = ParsingMethod.LALR1;
 			Report report = task.Execute();
 			return report.Errors.Count;
-		}
-
-		/// <summary>
-		/// Parses the command line arguments
-		/// </summary>
-		/// <param name="args">The command line arguments</param>
-		/// <returns>The parsed line as an AST, or null if the parsing failed</returns>
-		private ParseResult ParseArguments(string[] args)
-		{
-			StringBuilder builder = new StringBuilder();
-			foreach (string arg in args)
-			{
-				builder.Append(" ");
-				builder.Append(arg);
-			}
-			CommandLineLexer lexer = new CommandLineLexer(builder.ToString());
-			CommandLineParser parser = new CommandLineParser(lexer);
-			ParseResult result = parser.Parse();
-			foreach (ParseError error in result.Errors)
-				Console.WriteLine(error.Message);
-			return result;
 		}
 
 		/// <summary>
@@ -237,12 +216,12 @@ namespace Hime.HimeCC
 					case ArgGrammar:
 						if (arg.Children.Count != 1)
 							return null;
-						task.GrammarName = GetValue(arg);
+						task.GrammarName = Hime.CentralDogma.Input.CommandLine.GetValue(arg);
 						break;
 					case ArgPath:
 						if (arg.Children.Count != 1)
 							return null;
-						task.OutputPath = GetValue(arg);
+						task.OutputPath = Hime.CentralDogma.Input.CommandLine.GetValue(arg);
 						break;
 					case ArgMethodRNGLR:
 						task.Method = ParsingMethod.RNGLALR1;
@@ -250,7 +229,7 @@ namespace Hime.HimeCC
 					case ArgNamespace:
 						if (arg.Children.Count != 1)
 							return null;
-						task.Namespace = GetValue(arg);
+						task.Namespace = Hime.CentralDogma.Input.CommandLine.GetValue(arg);
 						break;
 					case ArgAccessPublic:
 						task.CodeAccess = Hime.CentralDogma.Output.Modifier.Public;
@@ -276,21 +255,6 @@ namespace Hime.HimeCC
 			if (value.StartsWith("\""))
 				value = value.Substring(1, value.Length - 2);
 			task.AddInputFile(value);
-		}
-
-		/// <summary>
-		/// Gets the value of the given parsed argument
-		/// </summary>
-		/// <param name="argument">A parsed argument</param>
-		/// <returns>The corresponding value, or null if there is none</returns>
-		private string GetValue(ASTNode argument)
-		{
-			if (argument.Children.Count == 0)
-				return null;
-			string value = argument.Children[0].Symbol.Value;
-			if (value.StartsWith("\""))
-				return value.Substring(1, value.Length - 2);
-			return value;
 		}
 
 		/// <summary>
