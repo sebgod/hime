@@ -1,9 +1,10 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
+"""
+Common APIs for the parsers
+"""
 
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
 
 class IParser:

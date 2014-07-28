@@ -1,9 +1,10 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
+"""
+Common API for the representation of errors in lexers and parsers
+"""
 
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
 
 class ParseErrorType:
@@ -18,6 +19,7 @@ class ParseError:
     """
     Represents an error in a parser
     """
+
     def __init__(self, p_type, position):
         """
         Initializes a new instance of the ParserError
@@ -65,6 +67,7 @@ class UnexpectedCharError(ParseError):
     """
     Represents an unexpected character error in the input stream of a lexer
     """
+
     def __init__(self, unexpected, position):
         """
         Initializes a new instance of the UnexpectedCharError class for the given character
@@ -96,6 +99,7 @@ class UnexpectedTokenError(ParseError):
     """
     Represents an unexpected token error in a parser
     """
+
     def __init__(self, token, position, expected):
         """
         Initializes a new instance of the UnexpectedTokenError class with a token and an array of expected names

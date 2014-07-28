@@ -1,15 +1,17 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
-
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
+"""
+Implementation of the AST-related APIs for the parsers
+"""
 
 from hime.redist import AST
 from hime.redist import ASTNode
 from hime.redist import SymbolType
+from hime.redist import TreeAction
 from hime.redist import get_symbol_type
 from hime.redist import get_symbol_index
+
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
 
 class ASTImpl(AST):
@@ -21,6 +23,7 @@ class ASTImpl(AST):
         """
         Represents a node in this AST
         """
+
         def __init__(self, symbol):
             """
             Initializes this node
@@ -113,7 +116,7 @@ class ASTImpl(AST):
         :return: The index of the first inserted node in this tree
         """
         result = len(self._nodes)
-        self._nodes.extend(nodes[index:index+count])
+        self._nodes.extend(nodes[index:index + count])
         return result
 
 
@@ -196,7 +199,7 @@ class GraphAST(ASTImpl):
         :return: The index of the data stored in this graph
         """
         result = len(self._adjacency)
-        self._adjacency.extend(adjacents[0:count-1])
+        self._adjacency.extend(adjacents[0:count - 1])
         return result
 
     def copy_node(self, node):
@@ -212,7 +215,86 @@ class GraphAST(ASTImpl):
         if origin.count != 0:
             clone.first = len(self._adjacency)
             clone.count = origin.count
-            self._adjacency.extend(self._adjacency[origin.first:origin.count-1])
-        return
+            self._adjacency.extend(self._adjacency[origin.first:origin.count - 1])
+        return result
 
     def get_adjacency(self, node, buffer, index):
+        """
+        Gets the adjacency data for the specified node
+        :param node: The node to retrieve the adjacency data of
+        :param buffer: The buffer to store the retrieved data in
+        :param index: The starting index in the provided buffer
+        :return: The number of adjacents
+        """
+        temp = self._nodes[node]
+
+
+class SubTree:
+    """
+    Represents a sub-tree in an AST
+    """
+
+    def __init__(self, pool):
+        """
+        Instantiates a new sub-tree attached to the given pool
+        :param pool: The pool to attach this object to
+        :return: This sub-tree
+        """
+        self.__pool = pool
+        self.__nodes = []
+        self.__actions = []
+
+    def get_label_at(self, index):
+        """
+        Gets the label of the node at the given index
+        :param index: The index within the buffer
+        :return: The label in the buffer
+        """
+        return self.__nodes[index].symbol
+
+    def get_action_at(self, index):
+        """
+        Gets the tree action applied onto the node at the given index
+        :param index: The index within the buffer
+        :return: The tree action in the buffer
+        """
+        return self.__actions[index]
+
+    def set_action_at(self, index, action):
+        """
+        Sets the tree action applied onto the node at the given index
+        :param index: The index within the buffer
+        :param action: The tree action to apply
+        :return: None
+        """
+        self.__actions[index] = action
+
+    def get_children_count_at(self, index):
+        """
+        Gets the number of children of the node at the given index
+        :param index: The index within the buffer
+        :return: The number of children
+        """
+        return self.__nodes[index].count
+
+    def set_children_count_at(self, index, count):
+        """
+        Sets the number of children of the node at the given index
+        :param index: The index within the buffer
+        :param count: The number of children
+        :return: None
+        """
+        self.__nodes[index].count = count
+
+    @property
+    def size(self):
+        """
+        Gets the total number of nodes in this sub-tree
+        :return: The total number of nodes in this sub-tree
+        """
+        if self.__actions[0] != TreeAction.REPLACE:
+            return self.__nodes[0].count + 1
+        size = 1
+        for i in range(0, self.__nodes[0].count):
+            size += self.__nodes[size].count + 1
+        return size

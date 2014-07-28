@@ -1,17 +1,17 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
+"""
+Common API for lexers
+"""
 
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
-
-from struct import unpack_from
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
 
 class ILexer:
     """
     Represents a lexer for a text stream
     """
+
     @property
     def terminals(self):
         """
@@ -48,17 +48,16 @@ class Automaton:
     """
     Data structure for a text lexer automaton
     """
+
     def __init__(self, content):
         """
         Initializes a new automaton from the given binary content
         :param content: The binary content to load from
         :return: The automaton
         """
-        self.__count = unpack_from('<i', content, 0)[0]
-        self.__table = unpack_from('<' + 'I' * self.__count, content, 4)
-        offset = 4 * self.__count + 4
-        rest = (len(content) - self.__count * 4 - 4) // 2
-        self.__states = unpack_from('<' + 'H' * rest, content, offset)
+        self.__count = content.read_int()
+        self.__table = content.read_unsigned_ints(self.__count)
+        self.__states = content.read_unsigned_shorts((len(content) - self.__count * 4 - 4) // 2)
 
     @property
     def states_count(self):
@@ -110,6 +109,12 @@ class Automaton:
         return self.__states[offset + 3 + value]
 
     def get_state_bulk_transition(self, offset, value):
+        """
+        Gets the transition from the DFA state at the given offset with the input value (at least 256)
+        :param offset: The DFA state's offset
+        :param value: The input value
+        :return: The state obtained by the transition, or 0xFFFF if none is found
+        """
         offset += 259
         for i in range(self.__states[offset + 2]):
             if self.__states[offset] <= value <= self.__states[offset + 1]:

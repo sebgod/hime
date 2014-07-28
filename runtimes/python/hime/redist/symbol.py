@@ -1,9 +1,10 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
+"""
+Common API for the definition of symbols in lexers and parsers
+"""
 
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
 
 # Symbol ID of the Epsilon terminal
@@ -66,6 +67,7 @@ class Token:
     """
     Represents a token as an output element of a lexer
     """
+
     def __init__(self, sid, index):
         self.__sid = sid
         self.__index = index

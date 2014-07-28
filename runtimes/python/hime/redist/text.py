@@ -1,15 +1,17 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
+"""
+Common API for the representation of text and related information
+"""
 
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
 
 class TextPosition:
     """
     Represents a position in term of line and column in a text input
     """
+
     def __init__(self, line, column):
         """
         Initializes this position with the given line and column numbers
@@ -51,6 +53,7 @@ class Text:
     All line numbers and column numbers are 1-based.
     Indices in the content are 0-based.
     """
+
     @property
     def line_count(self):
         """
@@ -123,6 +126,7 @@ class TokenizedText(Text):
     """
     Represents the output of a lexer as a tokenized text
     """
+
     @property
     def token_count(self):
         """

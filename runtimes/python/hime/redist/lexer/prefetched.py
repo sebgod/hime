@@ -1,15 +1,16 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
-
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
+"""
+Implementation of pre-fetching lexers
+"""
 
 from hime.redist import *
 from .common import *
 
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
-def is_line_ending(c1, c2):
+
+def _is_line_ending(c1, c2):
     """
     Determines whether [c1, c2] form a line ending sequence
 
@@ -44,6 +45,7 @@ class _PrefetchedText(TokenizedText):
         """
         Represents the metadata of a token
         """
+
         def __init__(self, terminal, start, length):
             """
             Initializes this cell
@@ -78,7 +80,7 @@ class _PrefetchedText(TokenizedText):
         c2 = 0
         for i in range(len(self.__content)):
             # is c1 c2 a line ending sequence?
-            if is_line_ending(c1, c2):
+            if _is_line_ending(c1, c2):
                 # are we late to detect MacOS style?
                 if c1 == 0x000D and c2 != 0x000A:
                     self.__lines.append(i - 1)
@@ -252,6 +254,7 @@ class _Match:
     """
     Represents a match in the input
     """
+
     def __init__(self, terminal):
         self.terminal = terminal
         self.length = 0
@@ -261,6 +264,7 @@ class PrefetchedLexer(ILexer):
     """
     Represents a lexer for a prefetched piece of text, i.e. the text is already in memory
     """
+
     def __init__(self, automaton, terminals, separator, input):
         """
         Initializes a new instance of the Lexer class with the given input

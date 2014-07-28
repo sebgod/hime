@@ -1,15 +1,27 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
+"""
+Common API for the representation of Abstract Syntax Trees
+"""
 
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
+
+
+class TreeAction:
+    """
+    Represents a tree action
+    """
+    NONE = 0  # Keep the node as is
+    REPLACE = 1  # Replace the node with its children
+    DROP = 2  # Drop the node and all its descendants
+    PROMOTE = 3  # Promote the node, i.e. replace its parent with it and insert its children where it was
 
 
 class AST:
     """
     Represents an Abstract Syntax Tree produced by a parser
     """
+
     @property
     def root(self):
         """
@@ -64,6 +76,7 @@ class ASTNode:
     """
     Represents a node in an Abstract Syntax Tree
     """
+
     def __init__(self, tree, index):
         """
         Initializes this node
@@ -110,6 +123,7 @@ class ASTFamily:
     """
     Represents a family of children for an ASTNode
     """
+
     def __init__(self, tree, parent):
         """
         Initializes this family
@@ -148,6 +162,7 @@ class _ChildIterator:
     """
     Implements an iterator over the children of a node
     """
+
     def __init__(self, tree, parent):
         """
         Initializes this iterator

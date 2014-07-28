@@ -1,12 +1,13 @@
-#######################################################################
-# Copyright (c) 2014 Laurent Wouters
-# GNU Lesser General Public License
-#######################################################################
-
-__author__ = 'Laurent Wouters <lwouters@xowl.org>'
-
+#!/usr/bin/env python
+"""
+Setup script for the hime.redist Python package
+"""
 
 from distutils.core import setup
+
+__author__ = "Laurent Wouters <lwouters@xowl.org>"
+__copyright__ = "Copyright 2014"
+__license__ = "LGPL v3+"
 
 setup(
     name = 'hime.redist',
