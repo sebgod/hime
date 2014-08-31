@@ -104,13 +104,19 @@ namespace Hime.CentralDogma.Output
 			// setup the maven project
 			CreateMavenProject();
 			// compile
-			bool success = ExecuteCommand("mvn", "package");
+			System.PlatformID platform = System.Environment.OSVersion.Platform;
+			bool success = false;
+			if (platform == System.PlatformID.Unix || platform == System.PlatformID.MacOSX)
+				success = ExecuteCommand("mvn", "package");
+			else
+				success = ExecuteCommand("mvn.bat", "package");
 			// extract the result
 			if (success)
 			{
 				if (File.Exists(GetArtifactAssembly()))
 					File.Delete(GetArtifactAssembly());
-				File.Move(Path.Combine(Path.Combine(path, "target"), "generated-1.0.0.jar"), GetArtifactAssembly());
+				string[] results = Directory.GetFiles(Path.Combine(path, "target"), "generated-*.jar");
+				File.Move(results[0], GetArtifactAssembly());
 			}
 			// cleanup the mess ...
 			Directory.Delete(Path.Combine(path, "src"), true);

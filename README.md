@@ -4,14 +4,20 @@ The Hime parser generator is a parser generator for various platforms (see below
 
 * Fast LR and GLR parsing.
 * Modern implementation of GLR with the [RNGLR algorithm](http://portal.acm.org/citation.cfm?id=1146809.1146810&coll=DL&dl=GUIDE&CFID=9339017&CFTOKEN=49072692).
-* [Simple and clear API](http://himedoc.bitbucket.org/v1.1.0/namespaceHime_1_1Redist.html) to manipulate parse trees.
-* [Extensive SDK API](http://himedoc.bitbucket.org/v1.1.0/namespaceHime_1_1CentralDogma.html) to programmatically manipulate grammars, generate lexers and parsers and use them.
+* [Simple and clear API](http://himedoc.bitbucket.org/v1.2.0/namespaceHime_1_1Redist.html) to manipulate parse trees.
+* [Extensive SDK API](http://himedoc.bitbucket.org/v1.2.0/namespaceHime_1_1CentralDogma.html) to programmatically manipulate grammars, generate lexers and parsers and use them.
 * Strong emphasis on the separation of data and code. Hime forbids the inclusion of inline code in its grammar definitions in order to have very readable grammars that can be easily understood, debugged, improved. It is still possible to have custom code invoked during parsing with semantic actions.
 
 The parser generator requires the .Net runtime (or Mono) for the generation of parsers. The generated parsers can be used with the corresponding runtime on the following platforms:
 
 * .Net framework 2.0+, or Mono on Linux and MacOS
 * Java 7+
+
+
+
+### Status ###
+
+[ ![Build Status](https://www.codeship.io/projects/187d0060-f89b-0131-618b-4abf95291133/status?branch=default)](https://www.codeship.io/projects/28719)
 
 
 
@@ -34,11 +40,9 @@ All user documentation is available in the [wiki](https://bitbucket.org/laurentw
 		* `utilities/net/demo`: Contains the C# sources of demonstration usage of the SDK API.
 		* `utilities/net/benchmark`: Contains the C# sources of the benchmark for the .Net platform.
 	* `tests`: Contains the all the test-related software components:
-		* `tests/multi`: Contains the common tests for the different runtime implementations.
-			* `tests/multi/driver`: Sources of the tests driver for all runtime tests.
-			* `tests/multi/net`: Sources of the test executor for the .Net runtime implementation.
-			* `tests/multi/java`: Sources of the test executor for the Java runtime implementation.
-		* `tests/net`: Contains the tests for other .Net software components.
+		* `tests/driver`: Sources of the tests driver for all runtime tests.
+		* `tests/net`: Sources of the test executor for the .Net runtime implementation.
+		* `tests/java`: Sources of the test executor for the Java runtime implementation.
 * Others
 	* `packages`: Contains the NuGet dependencies for the .Net software components.
 	* `extras`: Contains some extra products, e.g. standard grammars.
@@ -48,61 +52,18 @@ All user documentation is available in the [wiki](https://bitbucket.org/laurentw
 
 ### How to build ###
 
-All .Net software components are written in C# and integrated in a single Visual Studio solution file: `HimeSystems.sln` at the repository's root. All software components can be built from the component as follow:
-
-#### Build the runtimes ####
-
-Build the .Net runtime (on the .Net Framework with MSBuild):
-
-```
-$ msbuild /p:Configuration=Release runtimes/net/Hime.Redist.csproj
-```
-
-Build the .Net runtime (on Mono with xbuild):
-
-```
-$ xbuild /p:Configuration=Release runtimes/net/Hime.Redist.csproj
-```
-
-Build the Java runtime with Maven:
-
-```
-$ mvn -f runtimes/java/pom.xml clean package
-```
-
-#### Build the parser generator ####
-
-Building the .Net command line interface for the parser generator will automatically build its required dependencies.
-
-On the .Net Framework with MSBuild:
-
-```
-$ msbuild /p:Configuration=Release cli/net/HimeCC.csproj
-```
-
-On Mono with xbuild:
-
-```
-$ xbuild /p:Configuration=Release cli/net/HimeCC.csproj
-```
-
-The results are put in `cli/net/bin/Release`.
-
-
-
-### Run the tests ###
-
-#### Run the runtimes tests ####
-
-A common set of tests are executed on all runtime implementation.
-The results are output in the JUnit format at `tests/multi/TestResults.xml`.
+All .Net software components are written in C# and integrated in a single Visual Studio solution file: `HimeSystems.sln`.
+During the build, a common set of tests are executed on all runtime implementation.
+The results are output in the JUnit format at `tests/TestResults.xml`.
 Running the tests requires a local installation of Mono, xbuild and Maven.
 
+To execute the build process and run the tests, execute `build.sh`:
+
 ```
-$ sh tests/multi/execute.sh
+$ sh build.sh
 ```
 
-On Windows, the script can be run with Cygwin.
+To individually build a component, see the README associated to it.
 
 
 

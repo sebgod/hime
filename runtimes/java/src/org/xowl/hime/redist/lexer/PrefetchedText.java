@@ -20,10 +20,7 @@
 
 package org.xowl.hime.redist.lexer;
 
-import org.xowl.hime.redist.Symbol;
-import org.xowl.hime.redist.TextPosition;
-import org.xowl.hime.redist.Token;
-import org.xowl.hime.redist.TokenizedText;
+import org.xowl.hime.redist.*;
 import org.xowl.hime.redist.utils.BigList;
 
 import java.util.Arrays;
@@ -115,18 +112,17 @@ public class PrefetchedText implements TokenizedText {
         char c1 = '\0';
         char c2 = '\0';
         for (int i = 0; i != content.length(); i++) {
+            c1 = c2;
+            c2 = content.charAt(i);
             // is c1 c2 a line ending sequence?
             if (isLineEnding(c1, c2)) {
                 // are we late to detect MacOS style?
                 if (c1 == '\r' && c2 != '\n')
-                    addLine(i - 1);
-                else
                     addLine(i);
+                else
+                    addLine(i + 1);
             }
-            c1 = c2;
-            c2 = content.charAt(i);
         }
-        lines[line] = content.length();
     }
 
     /**
@@ -159,9 +155,10 @@ public class PrefetchedText implements TokenizedText {
      * @param index An index in the content
      */
     private void addLine(int index) {
-        if (line + 1 >= lines.length)
+        if (line >= lines.length)
             lines = Arrays.copyOf(lines, lines.length + initLineCount);
-        lines[line++] = index;
+        lines[line] = index;
+        line++;
     }
 
     /**
@@ -245,6 +242,8 @@ public class PrefetchedText implements TokenizedText {
     public int getLineLength(int line) {
         if (lines == null)
             findLines();
+        if (line == this.line)
+            return (content.length() - lines[this.line - 1]);
         return (lines[line] - lines[line - 1]);
     }
 
@@ -277,55 +276,46 @@ public class PrefetchedText implements TokenizedText {
      * @param position The position in this text
      * @return The context description
      */
-    public String[] getContext(TextPosition position) {
+    public Context getContext(TextPosition position) {
         String content = getLineContent(position.getLine());
-        // trim the end of the string to remove the end of line markers
-        for (int i=content.length() - 1; i != -1; i--) {
-            char x = content.charAt(i);
-            if (x == '\r' || x == '\n')
-                continue;
-            content = content.substring(0, i + 1);
+        if (content.length() == 0)
+            return new Context("", "^");
+        int end = content.length() - 1;
+        while (end != -1 && (content.charAt(end) == '\n' || content.charAt(end) == '\r'))
+            end--;
+        int start = 0;
+        while (start < end && Character.isWhitespace(content.charAt(start)))
+            start++;
+        if (position.getColumn() - 1 < start) {
+            // the position is in the whitespace prefix ...
+            start = 0;
         }
-        int cut = 0;
-        for (int i=0; i!=content.length(); i++)
-        {
-            if (Character.isWhitespace(content.charAt(i)))
-                break;
-            cut++;
+        if (position.getColumn() - 1 > end) {
+            // the position is in the trailing line endings ...
+            end = content.length() - 1;
         }
         StringBuilder builder = new StringBuilder();
-        for (int i=cut; i!=position.getColumn() - 1; i++)
+        for (int i=start; i!=position.getColumn() - 1; i++)
             builder.append(content.charAt(i) == '\t' ? '\t' : ' ');
         builder.append("^");
-        return new String[] {
-                content.substring(cut),
-                builder.toString()
-        };
+        return new Context( content.substring(start, end + 1), builder.toString());
     }
 
     /**
-     * Finds the 0-based number of the line at the given index in the content
+     * Finds the index in the cache of the line at the given input index in the content
      *
      * @param index The index within this content
-     * @return The line number
+     * @return The index of the corresponding line in the cache
      */
     private int findLineAt(int index) {
         if (lines == null)
             findLines();
-        int start = 0;
-        int end = line - 1;
-        while (true) {
-            if (end == start || end == start + 1)
-                return start;
-            int m = (start + end) / 2;
-            int v = lines[m];
-            if (index == v)
-                return m;
-            if (index < v)
-                end = m;
-            else
-                start = m;
+        for (int i=1; i!=line; i++) {
+            if (index < lines[i]) {
+                return i - 1;
+            }
         }
+        return line - 1;
     }
 
     /**
