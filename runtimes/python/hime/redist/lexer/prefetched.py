@@ -76,19 +76,17 @@ class _PrefetchedText(TokenizedText):
         :return: None
         """
         self.__lines.append(0)
-        c1 = 0
         c2 = 0
         for i in range(len(self.__content)):
+            c1 = c2
+            c2 = ord(self.__content[i])
             # is c1 c2 a line ending sequence?
             if _is_line_ending(c1, c2):
                 # are we late to detect MacOS style?
                 if c1 == 0x000D and c2 != 0x000A:
-                    self.__lines.append(i - 1)
-                else:
                     self.__lines.append(i)
-            c1 = c2
-            c2 = ord(self.__content[i])
-        self.__lines.append(len(self.__content))
+                else:
+                    self.__lines.append(i + 1)
 
     def add_token(self, terminal, start, length):
         """
@@ -115,7 +113,7 @@ class _PrefetchedText(TokenizedText):
         Gets the number of lines
         :return: The number of lines
         """
-        if len(self.__cells) == 0:
+        if len(self.__lines) == 0:
             self.find_lines()
         return len(self.__lines)
 
@@ -145,7 +143,7 @@ class _PrefetchedText(TokenizedText):
         :param line: The line number
         :return: The starting index of the line
         """
-        if len(self.__cells) == 0:
+        if len(self.__lines) == 0:
             self.find_lines()
         return self.__lines[line - 1]
 
@@ -156,8 +154,10 @@ class _PrefetchedText(TokenizedText):
         :param line: The line number
         :return: The length of the line
         """
-        if len(self.__cells) == 0:
+        if len(self.__lines) == 0:
             self.find_lines()
+        if line == len(self.__lines):
+            return len(self.__content) - self.__lines[len(self.__lines) - 1]
         return self.__lines[line] - self.__lines[line - 1]
 
     def get_line_content(self, line):
@@ -184,20 +184,23 @@ class _PrefetchedText(TokenizedText):
         :return: The context description
         """
         content = self.get_line_content(position.line)
-        content = content.rstrip('\r\n')
-        cut = 0
-        for i in range(len(content)):
-            if content[i].isspace():
-                break
-            cut += 1
+        if len(content) == 0:
+            return Context("", "^")
+        end = len(content) - 1
+        while end != 1 and (content[end] == '\n' or content[end] == '\r'):
+            end -= 1
+        start = 0
+        while start < end and content[start].isspace():
+            start += 1
+        if position.column - 1 < start:
+            start = 0
+        if position.column - 1 > end:
+            end = len(content) - 1
         builder = []
-        for i in range(cut, position.column):
+        for i in range(start, position.column - 1):
             builder.append('\t' if content[i] == '\t' else ' ')
         builder.append('^')
-        return [
-            content[cut:],
-            ''.join(builder)
-        ]
+        return Context(content[start:end], ''.join(builder))
 
     def _find_line_at(self, index):
         """
@@ -207,20 +210,10 @@ class _PrefetchedText(TokenizedText):
         """
         if len(self.__cells) == 0:
             self.find_lines()
-        start = 0
-        end = len(self.__lines) - 1
-        while True:
-            if end == start or end == start + 1:
-                return start
-            m = (start + end) // 2
-            v = self.__lines[m]
-            if index == v:
-                return m
-            if index < v:
-                end = m
-            else:
-                start = m
-        return 0
+        for i in range(1, len(self.__lines)):
+            if index < self.__lines[i]:
+                return i - 1
+        return len(self.__lines) - 1
 
     @property
     def token_count(self):

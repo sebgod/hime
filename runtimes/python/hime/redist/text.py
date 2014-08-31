@@ -46,6 +46,44 @@ class TextPosition:
         return "(" + self.__line + ", " + self.__column + ")"
 
 
+class Context:
+    """
+    Represents the context description of a position in a piece of text.
+    A context contains two pieces of text, the line content and the pointer.
+    For example, given the piece of text:
+    "public Struct Context"
+    A context pointing to the second word will look like:
+    content = "public Struct Context"
+    pointer = "       ^"
+    """
+
+    def __init__(self, content, pointer):
+        """
+        Initializes this context
+        :param content: The text being begin represented
+        :param pointer: The pointer textual representation
+        :return: The text context
+        """
+        self.__content = content
+        self.__pointer = pointer
+
+    @property
+    def content(self):
+        """
+        Gets the text content being represented
+        :return: The text content being represented
+        """
+        return self.__content
+
+    @property
+    def pointer(self):
+        """
+        Gets the pointer textual representation
+        :return: The pointer textual representation
+        """
+        return self.__pointer
+
+
 class Text:
     """
     Represents the input of parser with some metadata for line endings
