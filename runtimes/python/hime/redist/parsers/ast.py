@@ -91,9 +91,9 @@ class ASTImpl(AST):
         if get_symbol_type(reference) == SymbolType.TOKEN:
             return self._table_tokens.get_position(get_symbol_index(reference))
 
-    def symbol_for(self, reference):
+    def get_symbol_for(self, reference):
         """
-         Gets the symbol corresponding to the given symbol reference
+        Gets the symbol corresponding to the given symbol reference
         :param reference: A symbol reference
         :return: The corresponding symbol
         """
@@ -234,15 +234,16 @@ class SubTree:
     Represents a sub-tree in an AST
     """
 
-    def __init__(self, pool):
+    def __init__(self, pool, capacity):
         """
         Instantiates a new sub-tree attached to the given pool
         :param pool: The pool to attach this object to
+        :param pool: The capacity of the internal buffer of this sub-tree
         :return: This sub-tree
         """
         self.__pool = pool
-        self.__nodes = []
-        self.__actions = []
+        self.__nodes = [capacity]
+        self.__actions = [capacity]
 
     def get_label_at(self, index):
         """
