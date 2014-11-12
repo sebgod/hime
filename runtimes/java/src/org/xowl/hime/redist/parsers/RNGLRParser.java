@@ -33,7 +33,7 @@ import java.util.Queue;
 public class RNGLRParser extends BaseLRParser {
     /**
      * Represents a reduction operation to be performed
-     *
+     * <p/>
      * For reduction of length 0, the node is the GSS node on which it is applied, the first label then is epsilon
      * For others, the node is the SECOND GSS node on the path, not the head. The first label is then the label on the transition from the head
      */
@@ -161,7 +161,7 @@ public class RNGLRParser extends BaseLRParser {
                         ok = ok && (dependencies[r] == null);
                     if (ok) {
                         LRProduction prod = parserAutomaton.getNullableProduction(i);
-                        this.nullables[i] = buildSPPF(0, prod, sppf.EPSILON, null);
+                        this.nullables[i] = buildSPPF(0, prod, SPPFBuilder.EPSILON, null);
                         dependencies[i] = null;
                         solved++;
                     } else {
@@ -307,7 +307,7 @@ public class RNGLRParser extends BaseLRParser {
         shifts = new ArrayDeque<Shift>();
         int Ui = gss.createGeneration();
         int v0 = gss.createNode(0);
-        nextToken = lexer.getNextToken();
+        nextToken = lexer.getNextToken(gss);
 
         int count = parserAutomaton.getActionsCount(0, nextToken.getSymbolID());
         for (int i = 0; i != count; i++) {
@@ -315,14 +315,14 @@ public class RNGLRParser extends BaseLRParser {
             if (action.getCode() == LRAction.CODE_SHIFT)
                 shifts.add(new Shift(v0, action.getData()));
             else if (action.getCode() == LRAction.CODE_REDUCE)
-                reductions.add(new Reduction(v0, parserAutomaton.getProduction(action.getData()), sppf.EPSILON));
+                reductions.add(new Reduction(v0, parserAutomaton.getProduction(action.getData()), SPPFBuilder.EPSILON));
         }
 
         while (nextToken.getSymbolID() != Symbol.SID_EPSILON) // Wait for ε token
         {
             reducer(Ui);
             Token oldtoken = nextToken;
-            nextToken = lexer.getNextToken();
+            nextToken = lexer.getNextToken(gss);
             int Uj = shifter(oldtoken);
             GSSGeneration g = gss.getGeneration(Uj);
             if (g.getCount() == 0) {
