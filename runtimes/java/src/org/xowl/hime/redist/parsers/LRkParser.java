@@ -20,6 +20,8 @@
 package org.xowl.hime.redist.parsers;
 
 import org.xowl.hime.redist.*;
+import org.xowl.hime.redist.lexer.Automaton;
+import org.xowl.hime.redist.lexer.IContextProvider;
 import org.xowl.hime.redist.lexer.ILexer;
 
 import java.util.ArrayList;
@@ -29,41 +31,16 @@ import java.util.List;
 /**
  * Represents a base for all LR(k) parsers
  */
-public abstract class LRkParser extends BaseLRParser {
+public abstract class LRkParser extends BaseLRParser implements IContextProvider {
     /**
      * Initial size of the stack
      */
     protected static final int INIT_STACK_SIZE = 128;
 
     /**
-     * The simulator for LR(k) parsers used for error recovery
-     */
-    private class Simulator extends LRkSimulator {
-        /**
-         * Initializes a new simulator based on the given LR(k) parser
-         */
-        public Simulator() {
-            this.parserAutomaton = LRkParser.this.parserAutomaton;
-            this.parserVariables = LRkParser.this.parserVariables;
-            this.input = LRkParser.this.input;
-            this.stack = Arrays.copyOf(LRkParser.this.stack, INIT_STACK_SIZE);
-            this.stack = new int[INIT_STACK_SIZE];
-            this.head = LRkParser.this.head;
-        }
-    }
-
-    /**
      * The parser's automaton
      */
-    private LRkAutomaton parserAutomaton;
-    /**
-     * The parser's input as a stream of tokens
-     */
-    private RewindableTokenStream input;
-    /**
-     * The AST builder
-     */
-    private LRkASTBuilder builder;
+    protected LRkAutomaton automaton;
     /**
      * The parser's stack
      */
@@ -72,9 +49,13 @@ public abstract class LRkParser extends BaseLRParser {
      * Index of the stack's head
      */
     private int head;
+    /**
+     * The AST builder
+     */
+    private LRkASTBuilder builder;
 
     /**
-     * Initializes a new instance of the LRkParser class with the given lexer
+     * Initializes a new instance of the parser
      *
      * @param automaton The parser's automaton
      * @param variables The parser's variables
@@ -84,17 +65,23 @@ public abstract class LRkParser extends BaseLRParser {
      */
     protected LRkParser(LRkAutomaton automaton, Symbol[] variables, Symbol[] virtuals, SemanticAction[] actions, ILexer lexer) {
         super(variables, virtuals, actions, lexer);
-        this.parserAutomaton = automaton;
-        this.input = new RewindableTokenStream(lexer);
+        this.automaton = automaton;
         this.builder = new LRkASTBuilder(lexer.getOutput(), parserVariables, parserVirtuals);
     }
 
     /**
-     * Raises an error on an unexepcted token
+     * Gets whether the specified context is in effect
      *
-     * @param token The unexpected token
-     * @return The next token in the case the error is recovered
+     * @param context A context
+     * @return <code>true</code>  if the specified context is in effect
      */
+    public boolean isWithin(int context) {
+        if (context == Automaton.DEFAULT_CONTEXT)
+            return true;
+        for (int i = head; i != -1; i--)
+            if (automaton.getContexts(stack[i]).contains(context))
+                return true;
+        return false;
     private Token onUnexpectedToken(Token token) {
         LRExpected expectedOnHead = parserAutomaton.getExpected(stack[head], lexer.getTerminals());
         // the terminals for shifts are always expected
@@ -185,17 +172,18 @@ public abstract class LRkParser extends BaseLRParser {
      * @return A ParseResult object containing the data about the result
      */
     public ParseResult parse() {
-        this.stack = new int[INIT_STACK_SIZE];
-        Token nextToken = input.getNextToken();
+        stack = new int[INIT_STACK_SIZE];
+        head = 0;
+        Token nextToken = lexer.getNextToken(null);
         while (true) {
-            char action = ParseOnToken(nextToken);
+            char action = parseOnToken(nextToken);
             if (action == LRAction.CODE_SHIFT) {
-                nextToken = input.getNextToken();
+                nextToken = lexer.getNextToken(null);
                 continue;
             }
             if (action == LRAction.CODE_ACCEPT)
                 return new ParseResult(allErrors, lexer.getOutput(), builder.GetTree());
-            nextToken = onUnexpectedToken(nextToken);
+            nextToken = onUnexpectedToken(stack[head], nextToken);
             if (nextToken.getSymbolID() == 0 || allErrors.size() >= MAX_ERROR_COUNT)
                 return new ParseResult(allErrors, lexer.getOutput());
         }
@@ -207,9 +195,9 @@ public abstract class LRkParser extends BaseLRParser {
      * @param token The token to parse
      * @return The LR action on the token
      */
-    private char ParseOnToken(Token token) {
+    private char parseOnToken(Token token) {
         while (true) {
-            LRAction action = parserAutomaton.getAction(stack[head], token.getSymbolID());
+            LRAction action = automaton.getAction(stack[head], token.getSymbolID());
             if (action.getCode() == LRAction.CODE_SHIFT) {
                 head++;
                 if (head == stack.length)
@@ -218,10 +206,10 @@ public abstract class LRkParser extends BaseLRParser {
                 builder.stackPushToken(token.getIndex());
                 return action.getCode();
             } else if (action.getCode() == LRAction.CODE_REDUCE) {
-                LRProduction production = parserAutomaton.getProduction(action.getData());
+                LRProduction production = automaton.getProduction(action.getData());
                 head -= production.getReductionLength();
                 reduce(production);
-                action = parserAutomaton.getAction(stack[head], parserVariables.get(production.getHead()).getID());
+                action = automaton.getAction(stack[head], parserVariables.get(production.getHead()).getID());
                 head++;
                 if (head == stack.length)
                     stack = Arrays.copyOf(stack, stack.length + INIT_STACK_SIZE);
@@ -230,6 +218,25 @@ public abstract class LRkParser extends BaseLRParser {
             }
             return action.getCode();
         }
+    }
+
+    /**
+     * Raises an error on an unexpected token
+     *
+     * @param state The current LR state
+     * @param token The unexpected token
+     * @return The next token in the case the error is recovered
+     */
+    private Token onUnexpectedToken(int state, Token token) {
+        List<Integer> expectedIDs = automaton.getExpected(state, lexer.getTerminals().size());
+        List<Symbol> expected = new ArrayList<Symbol>();
+        for (int index : expectedIDs)
+            expected.add(lexer.getTerminals().get(index));
+        allErrors.add(new UnexpectedTokenError(lexer.getOutput().at(token.getIndex()), lexer.getOutput().getPositionOf(token.getIndex()), expected));
+        if (!recover)
+            return new Token(Symbol.SID_NOTHING, 0);
+        // TODO: try to recover from the error
+        return new Token(Symbol.SID_NOTHING, 0);
     }
 
     /**
